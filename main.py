@@ -31,20 +31,33 @@ def check(file_lines):
     if len(file_lines) != nwords + 1:
         return False, 'File has ' + str(len(file_lines)) + ' lines instead of nwords + 1 (' + str(nwords + 1) + ')'
     vocab = set([])
+    ok = True
+    msgs = []
     for index, line in enumerate(file_lines[1:]):
         toks = line.split()
         if len(toks) != dim + 1:
-            return False, 'Line ' + str(index+1) + ' has ' + str(len(toks)) +\
-                   ' tokens instead of dim + 1 (' + str(dim + 1) + ')' + '\n' + line
+            ok = False
+            msgs.append('Line ' + str(index+1) + ' has ' + str(len(toks)) +\
+                   ' tokens instead of dim + 1 (' + str(dim + 1) + ')' + '\n' + line)
+            #return False, 'Line ' + str(index+1) + ' has ' + str(len(toks)) +\
+            #       ' tokens instead of dim + 1 (' + str(dim + 1) + ')' + '\n' + line
         if toks[0] in vocab:
-            return False, 'Token ' + toks[0] + ' appears more than once'
+            ok = False
+            msgs.append('Token ' + toks[0] + ' appears more than once')
+            #return False, 'Token ' + toks[0] + ' appears more than once'
         else:
             vocab.add(toks[0])
         for index_tok, tok in enumerate(toks[1:]):
             if not is_float(tok):
-                return False,  'Line ' + str(index+1) + ' has a non-float in position ' + str(index_tok) + ': '\
-                       + str(tok)
-    return True, None
+                ok = False
+                msgs.append('Line ' + str(index+1) + ' has a non-float in position ' + str(index_tok+2) + ': '\
+                       + str(tok))
+                #return False,  'Line ' + str(index+1) + ' has a non-float in position ' + str(index_tok) + ': '\
+                #       + str(tok)
+    if ok:
+        return True, None
+    else:
+        return False, msgs
 
 
 def main():
@@ -55,24 +68,31 @@ def main():
     for filepath in sys.argv[1:]:
         if not os.path.exists(filepath):
             print('Error:', filepath, 'does not exist')
+            print()
             continue
         if not os.path.isfile(filepath):
             print('Error:', filepath, ': not a file')
+            print()
             continue
         if m.from_file(filepath) != 'text/plain':
             print('Error:', filepath, ': not a plain text file')
+            print()
             continue
         try:
             file_lines = open(filepath, 'r').readlines()
         except BaseException as e:
             print('Error:', filepath, ':', str(e))
+            print()
             continue
         print('Checking', filepath)
-        ok, message = check(file_lines)
+        ok, messages = check(file_lines)
         if ok:
             print(filepath, 'seems ok')
         else:
-            print(filepath, 'not ok:', message)
+            print(filepath, 'not ok:')
+            for message in messages:
+                print(message)
+        print()
 
 
 if __name__ == '__main__':
